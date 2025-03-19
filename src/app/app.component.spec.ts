@@ -14,16 +14,16 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'ai-image-studio' title`, () => {
+  it(`should have the 'ai-image-studio-app' title`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('ai-image-studio');
+    expect(app.title).toEqual('ai-image-studio-app');
   });
 
   it('should render title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, ai-image-studio');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, ai-image-studio-app');
   });
 });

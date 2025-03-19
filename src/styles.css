@@ -1,1 +1,53 @@
 /* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+/* Add responsive viewport meta tag if not already present in index.html */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply antialiased text-gray-800;
+  }
+  
+  /* Mobile-first responsive styles */
+  @media (max-width: 640px) {
+    .container {
+      @apply px-4;
+    }
+  }
+}
+
+/* Add responsive utilities */
+.responsive-container {
+  width: 100%;
+  padding-right: 1rem;
+  padding-left: 1rem;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 640px) {
+  .responsive-container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .responsive-container {
+    max-width: 1280px;
+  }
+}

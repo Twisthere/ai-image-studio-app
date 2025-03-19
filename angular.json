@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "ai-image-studio": {
+    "ai-image-studio-app": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/ai-image-studio",
+            "outputPath": "dist/ai-image-studio-app",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -50,7 +50,13 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -59,10 +65,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "ai-image-studio:build:production"
+              "buildTarget": "ai-image-studio-app:build:production"
             },
             "development": {
-              "buildTarget": "ai-image-studio:build:development"
+              "buildTarget": "ai-image-studio-app:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -92,5 +98,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "8263a52a-6052-45c8-b33c-a5ced236fad6"
   }
 }
