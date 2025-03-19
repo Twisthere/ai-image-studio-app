@@ -1,59 +1,125 @@
-# AiImageStudio
+# AI Image Studio App
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.0.
+AI Image Studio App is a web application that allows users to generate and modify images using AI technology. The application uses the Gemini AI model from Google for image generation and modification.
 
-## Development server
+## Features
 
-To start a local development server, run:
+- **AI Image Generation**: Generate completely new images based on text prompts
+- **AI Image Modification**: Upload existing images and modify them using text prompts
+- **Cloud Storage**: All generated and modified images are stored in Cloudinary
+- **Responsive Design**: Works seamlessly across desktop and mobile devices
 
-```bash
-ng serve
-```
+## Project Structure
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+The project is structured into two main parts:
 
-## Code scaffolding
+### Frontend (Angular)
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+- Built with Angular 19
+- Uses TailwindCSS for styling
+- Communicates with the backend API for image processing
 
-```bash
-ng generate component component-name
-```
+### Backend (Node.js)
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+- Express.js server
+- MongoDB database for storing image metadata
+- Google Generative AI (Gemini) for image generation and modification
+- Cloudinary for image storage
 
-```bash
-ng generate --help
-```
+## Technologies Used
 
-## Building
+- **Frontend**:
+  - Angular 19
+  - TailwindCSS
+  - RxJS
+  
+- **Backend**:
+  - Node.js
+  - Express.js
+  - MongoDB/Mongoose
+  - Google Generative AI (@google/generative-ai)
+  - Cloudinary
+  - Multer for file handling
 
-To build the project run:
+## Getting Started
 
-```bash
-ng build
-```
+### Prerequisites
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+- Node.js (v14 or later)
+- MongoDB instance
+- Google Gemini API key
+- Cloudinary account
 
-## Running unit tests
+### Installation
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+1. Clone the repository
 
-```bash
-ng test
-```
+   ```bash
+   git clone https://github.com/yourusername/ai-image-studio.git
+   cd ai-image-studio
+   ```
 
-## Running end-to-end tests
+2. Install frontend dependencies
 
-For end-to-end (e2e) testing, run:
+   ```bash
+   npm install
+   ```
 
-```bash
-ng e2e
-```
+3. Install backend dependencies
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+   ```bash
+   cd backend
+   npm install
+   ```
 
-## Additional Resources
+4. Set up environment variables:
+   - Copy the `.example.env` to `.env` in the backend directory
+   - Fill in your credentials:
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+     ```env
+     MONGO_URI=your_mongodb_connection_string
+     GEMINI_API_KEY=your_google_gemini_api_key
+     CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+     CLOUDINARY_API_KEY=your_cloudinary_api_key
+     CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+     PORT=5000
+     ```
+
+### Running the Application
+
+1. Start the backend server
+
+   ```bash
+   cd backend
+   npm run dev
+   ```
+
+2. Start the Angular frontend (in another terminal)
+
+   ```bash
+   cd ..  # Return to the project root
+   npm start
+   ```
+
+3. Open your browser at `http://localhost:4200`
+
+## API Endpoints
+
+- `POST /api/image/generate`: Generate an image from a text prompt
+- `POST /api/image/modify`: Modify an uploaded image using a text prompt
+- `GET /api/image/all`: Get all previously generated and modified images
+
+## Deployment
+
+The application is deployed using Vercel:
+
+- Frontend: <https://ai-image-studio-app-app.vercel.app>
+- Backend: <https://ai-image-studio-app-api.vercel.app>
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Author
+
+Created by Manthan Ankolekar
