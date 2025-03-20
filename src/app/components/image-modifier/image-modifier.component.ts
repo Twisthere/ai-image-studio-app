@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ImageService } from '../../services/image.service';
 import { FormsModule } from '@angular/forms';
 
@@ -9,42 +9,45 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './image-modifier.component.css',
 })
 export class ImageModifierComponent {
-  prompt: string = '';
-  selectedFile: File | null = null;
-  previewImage: string | null = null;
-  modifiedImage: string | null = null;
-  loading: boolean = false;
+  prompt = signal<string>('');
+  selectedFile = signal<File | null>(null);
+  previewImage = signal<string | null>(null);
+  modifiedImage = signal<string | null>(null);
+  loading = signal<boolean>(false);
 
-  constructor(private imageService: ImageService) {}
+  imageService = inject(ImageService);
+
+  constructor() {}
 
   onFileChange(event: any) {
     const file = event.target.files[0];
     if (file) {
-      this.selectedFile = file;
+      this.selectedFile.set(file);
       
       // Create image preview
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.previewImage = e.target.result;
+        this.previewImage.set(e.target.result);
       };
       reader.readAsDataURL(file);
     }
   }
 
   async modify() {
-    if (!this.selectedFile || !this.prompt.trim()) return;
+    if (!this.selectedFile() || !this.prompt().trim()) return;
     
-    this.loading = true;
+    this.loading.set(true);
     try {
-      this.modifiedImage = await this.imageService.modifyImage(
-        this.selectedFile,
-        this.prompt
+      const modifiedImageUrl = await this.imageService.modifyImage(
+        this.selectedFile()!,
+        this.prompt()
       );
+      this.modifiedImage.set(modifiedImageUrl);
     } catch (error) {
       console.error('Error modifying image:', error);
       // Handle error - maybe add an error message to the UI
     } finally {
-      this.loading = false;
+      this.loading.set(false);
     }
   }
 }

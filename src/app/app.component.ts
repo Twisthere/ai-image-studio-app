@@ -1,8 +1,7 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
 import { ImageGeneratorComponent } from './components/image-generator/image-generator.component';
 import { ImageModifierComponent } from './components/image-modifier/image-modifier.component';
 import { Meta } from '@angular/platform-browser';
-import { Visit } from './models/visit.model';
 import { TrackService } from './services/track.service';
 
 @Component({
@@ -14,14 +13,23 @@ import { TrackService } from './services/track.service';
 })
 export class AppComponent implements OnInit {
   title = 'ai-image-studio-app';
-
+  
   private trackService = inject(TrackService);
   private meta = inject(Meta);
 
-  visitorCount = signal(0);
-  currentYear: number = new Date().getFullYear();
+  // Use computed signals for derived values
+  currentYear = computed(() => new Date().getFullYear());
+  
+  // Access tracking signals directly
+  visitorCount = this.trackService.visitorCount;
+  isTrackingLoading = this.trackService.isLoading;
+  trackingError = this.trackService.error;
 
   constructor() {
+    this.setupMetaTags();
+  }
+
+  private setupMetaTags(): void {
     this.meta.addTags([
       {
         name: 'viewport',
@@ -64,18 +72,11 @@ export class AppComponent implements OnInit {
     ]);
   }
 
-  ngOnInit(): void {
-    this.trackProjectVisit();
-  }
-
-  private trackProjectVisit(): void {
-    this.trackService.trackProjectVisit(this.title).subscribe({
-      next: (response: Visit) => {
-        this.visitorCount.set(response.uniqueVisitors);
-      },
-      error: (err: Error) => {
-        console.error('Failed to track visit:', err);
-      },
-    });
+  async ngOnInit(): Promise<void> {
+    try {
+      await this.trackService.trackProjectVisit(this.title);
+    } catch (error) {
+      console.error('Error tracking project visit:', error);
+    }
   }
 }

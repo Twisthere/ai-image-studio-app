@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ImageService } from '../../services/image.service';
 import { FormsModule } from '@angular/forms';
 
@@ -9,15 +9,26 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './image-generator.component.css'
 })
 export class ImageGeneratorComponent {
-  prompt: string = '';
-  generatedImage: string | null = null;
-  loading: boolean = false;
+  prompt = signal<string>('');
+  generatedImage = signal<string | null>(null);
+  loading = signal<boolean>(false);
 
-  constructor(private imageService: ImageService) {}
+  imageService = inject(ImageService);
+
+  constructor() {}
 
   async generate() {
-    this.loading = true;
-    this.generatedImage = await this.imageService.generateImage(this.prompt);
-    this.loading = false;
+    if (!this.prompt().trim()) return;
+    
+    this.loading.set(true);
+    try {
+      const imageUrl = await this.imageService.generateImage(this.prompt());
+      this.generatedImage.set(imageUrl);
+    } catch (error) {
+      console.error('Error generating image:', error);
+      // Handle error - maybe add an error message to the UI
+    } finally {
+      this.loading.set(false);
+    }
   }
 }
