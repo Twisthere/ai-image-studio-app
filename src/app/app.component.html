@@ -39,7 +39,7 @@
 
   <!-- Footer -->
   <footer class="bg-blue-600 text-white text-center py-4 mt-auto">
-    <p class="text-sm md:text-base">© {{ currentYear }} AI Image Studio. All rights reserved.</p>
+    <p class="text-sm md:text-base">© {{ currentYear() }} AI Image Studio. All rights reserved.</p>
     @if (trackingError()) {
       <p class="text-xs text-red-200 mt-1">{{ trackingError() }}</p>
     }
