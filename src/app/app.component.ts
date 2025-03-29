@@ -3,11 +3,12 @@ import { ImageGeneratorComponent } from './components/image-generator/image-gene
 import { ImageModifierComponent } from './components/image-modifier/image-modifier.component';
 import { Meta } from '@angular/platform-browser';
 import { TrackService } from './services/track.service';
+import { ImageGalleryComponent } from "./components/image-gallery/image-gallery.component";
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [ImageGeneratorComponent, ImageModifierComponent],
+  imports: [ImageGeneratorComponent, ImageModifierComponent, ImageGalleryComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })

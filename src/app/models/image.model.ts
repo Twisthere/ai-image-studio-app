@@ -1,12 +1,12 @@
 export interface ImageResponse {
-  message: string;
+  message?: string;
   imageUrl: string;
 }
 
 export interface Image {
   _id: string;
-  type: 'generated' | 'modified';
   prompt: string;
-  imagePath: string;
+  imageUrl: string;
   createdAt: string;
+  type?: string; // Add this optional field
 }

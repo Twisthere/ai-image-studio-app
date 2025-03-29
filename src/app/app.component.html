@@ -22,7 +22,7 @@
 
   <!-- Main Content -->
   <main class="container mx-auto px-4 py-6 flex-grow">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       <!-- AI Image Generator -->
       <section class="bg-white p-4 md:p-6 shadow-md rounded-lg">
         <h2 class="text-lg md:text-xl font-semibold mb-4">Generate AI Image</h2>
@@ -35,6 +35,12 @@
         <app-image-modifier></app-image-modifier>
       </section>
     </div>
+    
+    <!-- Image Gallery Section -->
+    <section class="bg-white p-4 md:p-6 shadow-md rounded-lg">
+      <h2 class="text-2xl font-bold mb-6 text-gray-800">Generated Images</h2>
+      <app-image-gallery></app-image-gallery>
+    </section>
   </main>
 
   <!-- Footer -->

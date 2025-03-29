@@ -23,7 +23,7 @@ export class ImageModifierComponent {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile.set(file);
-      
+
       // Create image preview
       const reader = new FileReader();
       reader.onload = (e: any) => {
@@ -33,21 +33,22 @@ export class ImageModifierComponent {
     }
   }
 
-  async modify() {
+  modify() {
     if (!this.selectedFile() || !this.prompt().trim()) return;
-    
+
     this.loading.set(true);
-    try {
-      const modifiedImageUrl = await this.imageService.modifyImage(
-        this.selectedFile()!,
-        this.prompt()
-      );
-      this.modifiedImage.set(modifiedImageUrl);
-    } catch (error) {
-      console.error('Error modifying image:', error);
-      // Handle error - maybe add an error message to the UI
-    } finally {
-      this.loading.set(false);
-    }
+    this.imageService
+      .modifyImage(this.selectedFile()!, this.prompt())
+      .subscribe({
+        next: (modifiedImageUrl) => {
+          this.modifiedImage.set(modifiedImageUrl);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          console.error('Error modifying image:', error);
+          // Handle error - maybe add an error message to the UI
+          this.loading.set(false);
+        },
+      });
   }
 }

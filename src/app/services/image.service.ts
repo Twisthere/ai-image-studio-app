@@ -1,93 +1,109 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { lastValueFrom } from 'rxjs';
+import { Observable, tap, catchError, throwError, map } from 'rxjs';
 import { Image, ImageResponse } from '../models/image.model';
 
 @Injectable({ providedIn: 'root' })
 export class ImageService {
-  private apiUrl = environment.apiUrl;
+  private apiURL = environment.apiUrl;
+  private http = inject(HttpClient);
 
-  // Create signals for state management
+  // State management with signals
   images = signal<Image[]>([]);
   isLoading = signal<boolean>(false);
   error = signal<string | null>(null);
 
-  http = inject(HttpClient);
-
-  constructor() {
-    // Initialize by loading all images
-    this.fetchAllImages();
-  }
-
-  async generateImage(prompt: string): Promise<string> {
+  generateImage(prompt: string): Observable<string> {
     this.isLoading.set(true);
     this.error.set(null);
-
-    try {
-      const response = await lastValueFrom(
-        this.http.post<ImageResponse>(`${this.apiUrl}/generate`, { prompt })
-      );
-      // After successful generation, refresh the images list
-      this.fetchAllImages();
-      return response.imageUrl;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to generate image';
-      this.error.set(errorMessage);
-      throw err;
-    } finally {
-      this.isLoading.set(false);
-    }
+    
+    return this.http.post<ImageResponse>(`${this.apiURL}/generate`, { prompt }).pipe(
+      map(response => response.imageUrl),
+      tap({
+        next: (imageUrl) => {
+          // Create an image object and update the images collection
+          const newImage: Image = {
+            _id: Date.now().toString(), // Temporary ID until we get the real one from backend
+            prompt: prompt,
+            imageUrl: imageUrl,
+            createdAt: new Date().toISOString()
+          };
+          this.updateImages(newImage);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to generate image';
+          this.error.set(errorMessage);
+          this.isLoading.set(false);
+        }
+      }),
+      catchError(err => {
+        this.isLoading.set(false);
+        return throwError(() => err);
+      })
+    );
   }
 
-  async modifyImage(file: File, prompt: string): Promise<string> {
+  modifyImage(file: File, prompt: string): Observable<string> {
     this.isLoading.set(true);
     this.error.set(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('prompt', prompt);
-
-      const response = await lastValueFrom(
-        this.http.post<ImageResponse>(`${this.apiUrl}/modify`, formData)
-      );
-
-      // After successful modification, refresh the images list
-      this.fetchAllImages();
-      return response.imageUrl;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to modify image';
-      this.error.set(errorMessage);
-      throw err;
-    } finally {
-      this.isLoading.set(false);
-    }
+    
+    // Create FormData to handle file upload
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('prompt', prompt);
+    
+    return this.http.post<ImageResponse>(`${this.apiURL}/modify`, formData).pipe(
+      map(response => response.imageUrl),
+      tap({
+        next: () => this.isLoading.set(false),
+        error: (err) => {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to modify image';
+          this.error.set(errorMessage);
+          this.isLoading.set(false);
+        }
+      }),
+      catchError(err => {
+        this.isLoading.set(false);
+        return throwError(() => err);
+      })
+    );
   }
 
-  async fetchAllImages(): Promise<void> {
+  getImages(): Observable<Image[]> {
     this.isLoading.set(true);
     this.error.set(null);
-
-    try {
-      const response = await lastValueFrom(
-        this.http.get<Image[]>(`${this.apiUrl}/all`)
-      );
-      this.images.set(response);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to fetch images';
-      this.error.set(errorMessage);
-    } finally {
-      this.isLoading.set(false);
-    }
+    
+    return this.http.get<any[]>(`${this.apiURL}/all`).pipe(
+      map(images => images
+        .filter(img => img && img.imagePath)
+        .map(img => ({
+          _id: img._id,
+          prompt: img.prompt,
+          imageUrl: img.imagePath, // Map imagePath to imageUrl
+          createdAt: img.createdAt,
+          type: img.type // Optional: you can include this if needed
+        }))
+      ),
+      tap(response => this.images.set(response)),
+      tap({
+        next: () => this.isLoading.set(false),
+        error: (err) => {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to fetch images';
+          this.error.set(errorMessage);
+          this.isLoading.set(false);
+        }
+      }),
+      catchError(err => {
+        this.isLoading.set(false);
+        return throwError(() => err);
+      })
+    );
   }
 
-  // Keeping the original method for backward compatibility
-  async getAllImages(): Promise<Image[]> {
-    await this.fetchAllImages();
-    return this.images();
+  private updateImages(newImage: Image): void {
+    const currentImages = this.images();
+    this.images.set([newImage, ...currentImages]);
   }
 }

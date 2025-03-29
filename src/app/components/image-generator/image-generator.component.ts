@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-image-generator',
   imports: [FormsModule],
   templateUrl: './image-generator.component.html',
-  styleUrl: './image-generator.component.css'
+  styleUrl: './image-generator.component.css',
 })
 export class ImageGeneratorComponent {
   prompt = signal<string>('');
@@ -17,18 +17,20 @@ export class ImageGeneratorComponent {
 
   constructor() {}
 
-  async generate() {
+  generate() {
     if (!this.prompt().trim()) return;
-    
+
     this.loading.set(true);
-    try {
-      const imageUrl = await this.imageService.generateImage(this.prompt());
-      this.generatedImage.set(imageUrl);
-    } catch (error) {
-      console.error('Error generating image:', error);
-      // Handle error - maybe add an error message to the UI
-    } finally {
-      this.loading.set(false);
-    }
+    this.imageService.generateImage(this.prompt()).subscribe({
+      next: (imageUrl) => {
+        this.generatedImage.set(imageUrl);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error generating image:', error);
+        // Handle error - maybe add an error message to the UI
+        this.loading.set(false);
+      },
+    });
   }
 }
