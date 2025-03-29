@@ -67,13 +67,66 @@ async function uploadToCloudinary(imageBuffer) {
 
 // Example implementation for modifyImage in geminiService.js
 async function modifyImage(prompt, imageBuffer) {
-  // Upload buffer directly to Cloudinary
-  const cloudinaryResult = await uploadToCloudinary(imageBuffer);
-  
-  // Use Gemini API to modify the image
-  // ...
-  
-  return cloudinaryResult;
+  try {
+    // Initialize the Gemini model for image editing
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash-exp-image-generation",
+      generationConfig: {
+        responseModalities: ['Text', 'Image']
+      },
+    });
+
+    // Convert buffer to base64 for Gemini API
+    const base64Image = imageBuffer.toString('base64');
+    
+    // Create the content parts array with the image and prompt
+    const imagePart = {
+      inlineData: {
+        data: base64Image,
+        mimeType: "image/png"
+      }
+    };
+    
+    // Prepare the prompt for image modification
+    const fullPrompt = `Modify this image according to the following instructions: ${prompt}`;
+    
+    // Generate the modified image
+    const response = await model.generateContent([imagePart, fullPrompt]);
+    let modifiedImageUrl = null;
+    
+    // Process the response to extract the modified image
+    for (const part of response.response.candidates[0].content.parts) {
+      if (part.inlineData) {
+        // Get the base64 image data
+        const imageData = part.inlineData.data;
+        
+        // Upload the base64 image to Cloudinary
+        const result = await cloudinary.uploader.upload(`data:image/png;base64,${imageData}`, {
+          folder: "ai-image-studio/modified",
+          resource_type: "image"
+        });
+        
+        modifiedImageUrl = result.secure_url;
+      }
+    }
+
+    if (!modifiedImageUrl) {
+      throw new Error("Failed to modify image");
+    }
+
+    // Save to database
+    const newImage = new Image({
+      type: "modified",
+      prompt,
+      imagePath: modifiedImageUrl
+    });
+    await newImage.save();
+    
+    return modifiedImageUrl;
+  } catch (error) {
+    console.error("Image modification error:", error);
+    throw new Error("Failed to modify image: " + error.message);
+  }
 }
 
 module.exports = { generateImage, modifyImage };
