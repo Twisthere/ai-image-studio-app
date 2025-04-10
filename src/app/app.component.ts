@@ -1,66 +1,137 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
-import { ImageGeneratorComponent } from './components/image-generator/image-generator.component';
-import { ImageModifierComponent } from './components/image-modifier/image-modifier.component';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import {
+  RouterOutlet,
+  RouterModule,
+  RouterLink,
+  RouterLinkActive,
+} from '@angular/router';
 import { Meta } from '@angular/platform-browser';
 import { TrackService } from './services/track.service';
-import { ImageGalleryComponent } from "./components/image-gallery/image-gallery.component";
+import { catchError, finalize, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [ImageGeneratorComponent, ImageModifierComponent, ImageGalleryComponent],
+  imports: [
+    RouterOutlet,
+    RouterModule,
+    RouterLink,
+    RouterLinkActive,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
 export class AppComponent implements OnInit {
-  title = 'ai-image-studio-app';
-  
-  private trackService = inject(TrackService);
-  private meta = inject(Meta);
+  readonly title = 'ai-image-studio-app';
+
+  private readonly trackService = inject(TrackService);
+  private readonly meta = inject(Meta);
+
+  // Theme state
+  readonly darkMode = signal<boolean>(false);
+
+  // Mobile menu state
+  readonly mobileMenuOpen = signal<boolean>(false);
 
   // Use computed signals for derived values
-  currentYear = computed(() => new Date().getFullYear());
-  
+  readonly currentYear = computed(() => new Date().getFullYear());
+  readonly themeIcon = computed(() => (this.darkMode() ? 'sun' : 'moon'));
+
   // Access tracking signals directly
-  visitorCount = this.trackService.visitorCount;
-  isTrackingLoading = this.trackService.isLoading;
-  trackingError = this.trackService.error;
+  readonly visitorCount = this.trackService.visitorCount;
+  readonly isTrackingLoading = this.trackService.isLoading;
+  readonly trackingError = this.trackService.error;
+
+  // Media query for system preference
+  private readonly prefersDarkQuery = window.matchMedia(
+    '(prefers-color-scheme: dark)'
+  );
 
   constructor() {
     this.setupMetaTags();
+    this.initializeTheme();
+    this.setupSystemThemeListener();
+    effect(() => this.applyTheme(this.darkMode()));
   }
 
+  // Toggle mobile menu
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((open) => !open);
+  }
+
+  /**
+   * Initializes the theme based on local storage or system preference
+   */
+  private initializeTheme(): void {
+    const savedTheme = localStorage.getItem('theme');
+
+    if (savedTheme) {
+      this.darkMode.set(savedTheme === 'dark');
+    } else {
+      // Use system preference if no saved theme
+      this.darkMode.set(this.prefersDarkQuery.matches);
+    }
+  }
+
+  /**
+   * Sets up listener for system theme changes
+   */
+  private setupSystemThemeListener(): void {
+    // Only update if user hasn't explicitly set preference
+    this.prefersDarkQuery.addEventListener('change', (event) => {
+      if (!localStorage.getItem('theme')) {
+        this.darkMode.set(event.matches);
+      }
+    });
+  }
+
+  /**
+   * Toggles between light and dark themes
+   */
+  toggleTheme(): void {
+    const newDarkMode = !this.darkMode();
+    this.darkMode.set(newDarkMode);
+    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
+  }
+
+  /**
+   * Applies the appropriate theme class to the document
+   * @param isDark Whether to apply dark mode
+   */
+  private applyTheme(isDark: boolean): void {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
+
+  /**
+   * Sets up meta tags for SEO and social sharing
+   */
   private setupMetaTags(): void {
     this.meta.addTags([
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        rel: 'icon',
-        type: 'image/x-icon',
-        href: 'favicon.ico',
-      },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { rel: 'icon', type: 'image/x-icon', href: 'favicon.ico' },
       {
         name: 'canonical',
         content: 'https://ai-image-studio-app-app.vercel.app',
       },
-      {
-        name: 'author',
-        content: 'Manthan Ankolekar',
-      },
+      { name: 'author', content: 'Manthan Ankolekar' },
       {
         name: 'keywords',
         content: 'angular, ai image studio, image generator, image modifier',
       },
-      {
-        name: 'robots',
-        content: 'index, follow',
-      },
-      {
-        property: 'og:title',
-        content: 'AI Image Studio App',
-      },
+      { name: 'robots', content: 'index, follow' },
+      { property: 'og:title', content: 'AI Image Studio App' },
       {
         property: 'og:description',
         content:
@@ -73,11 +144,21 @@ export class AppComponent implements OnInit {
     ]);
   }
 
-  async ngOnInit(): Promise<void> {
-    try {
-      await this.trackService.trackProjectVisit(this.title);
-    } catch (error) {
-      console.error('Error tracking project visit:', error);
-    }
+  /**
+   * Track project visit on component initialization using reactive approach
+   */
+  ngOnInit(): void {
+    // Use RxJS approach instead of async/await
+    this.trackService
+      .trackVisitRx(this.title)
+      .pipe(
+        tap((count) => console.log(`Visitor count: ${count}`)),
+        catchError((error) => {
+          console.error('Error tracking project visit:', error);
+          return of(0); // Return fallback value
+        }),
+        finalize(() => console.log('Tracking complete'))
+      )
+      .subscribe();
   }
 }

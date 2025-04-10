@@ -1,12 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import {
-  CommonModule,
-  NgOptimizedImage,
-  NgClass,
-  DatePipe,
-} from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ImageService } from '../../services/image.service';
-import { Image } from '../../models/image.model';
 
 @Component({
   selector: 'app-image-gallery',
