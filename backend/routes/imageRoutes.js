@@ -1,5 +1,5 @@
 const express = require("express");
-const { generateImage, modifyImage } = require("../services/geminiService");
+const { generateImage, modifyImage, deleteImage } = require("../services/geminiService");
 const upload = require("../middleware/uploadMiddleware");
 const router = express.Router();
 
@@ -35,6 +35,19 @@ router.get("/all", async (req, res) => {
     const images = await Image.find().sort({ createdAt: -1 });
     
     res.json(images);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add a new route to delete an image
+router.delete("/:id", async (req, res) => {
+  try {
+    const imageId = req.params.id;
+    if (!imageId) return res.status(400).json({ error: "Image ID is required" });
+    
+    const result = await deleteImage(imageId);
+    res.json({ message: "Image deleted successfully", result });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

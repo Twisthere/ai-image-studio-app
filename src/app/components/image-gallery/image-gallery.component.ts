@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ImageService } from '../../services/image.service';
 
@@ -10,6 +10,9 @@ import { ImageService } from '../../services/image.service';
 })
 export class ImageGalleryComponent implements OnInit {
   private imageService = inject(ImageService);
+  
+  // Add signal to track deletions in progress
+  readonly deletingImageIds = signal<Set<string>>(new Set());
 
   get images() {
     return this.imageService.images;
@@ -37,6 +40,39 @@ export class ImageGalleryComponent implements OnInit {
         console.error('Failed to load images:', err);
       },
     });
+  }
+
+  deleteImage(imageId: string): void {
+    if (confirm('Are you sure you want to delete this image? This action cannot be undone.')) {
+      // Add to set of deleting images
+      this.deletingImageIds.update(ids => {
+        ids.add(imageId);
+        return new Set(ids);
+      });
+      
+      this.imageService.deleteImage(imageId).subscribe({
+        next: () => {
+          console.log('Image deleted successfully');
+          // Remove from set of deleting images
+          this.deletingImageIds.update(ids => {
+            ids.delete(imageId);
+            return new Set(ids);
+          });
+        },
+        error: (err) => {
+          console.error('Failed to delete image:', err);
+          // Remove from set of deleting images
+          this.deletingImageIds.update(ids => {
+            ids.delete(imageId);
+            return new Set(ids);
+          });
+        }
+      });
+    }
+  }
+
+  isDeleting(imageId: string): boolean {
+    return this.deletingImageIds().has(imageId);
   }
 
   // Helper method to handle different aspect ratios

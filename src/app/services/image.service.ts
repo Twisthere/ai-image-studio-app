@@ -102,6 +102,31 @@ export class ImageService {
     );
   }
 
+  deleteImage(imageId: string): Observable<any> {
+    this.isLoading.set(true);
+    this.error.set(null);
+    
+    return this.http.delete<any>(`${this.apiURL}/${imageId}`).pipe(
+      tap({
+        next: (response) => {
+          // Remove the deleted image from the images signal
+          const currentImages = this.images();
+          this.images.set(currentImages.filter(img => img._id !== imageId));
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to delete image';
+          this.error.set(errorMessage);
+          this.isLoading.set(false);
+        }
+      }),
+      catchError(err => {
+        this.isLoading.set(false);
+        return throwError(() => err);
+      })
+    );
+  }
+
   private updateImages(newImage: Image): void {
     const currentImages = this.images();
     this.images.set([newImage, ...currentImages]);

@@ -129,4 +129,34 @@ async function modifyImage(prompt, imageBuffer) {
   }
 }
 
-module.exports = { generateImage, modifyImage };
+// Function to delete an image from both database and Cloudinary
+async function deleteImage(imageId) {
+  try {
+    // Find the image in the database
+    const image = await Image.findById(imageId);
+    if (!image) {
+      throw new Error("Image not found");
+    }
+
+    // Extract the Cloudinary public ID from the URL
+    // Cloudinary URLs are typically like: https://res.cloudinary.com/cloud-name/image/upload/v1234567890/folder/public-id.jpg
+    const urlParts = image.imagePath.split('/');
+    // Get the filename including the folder path after the /upload/ part
+    const publicIdWithExtension = urlParts.slice(urlParts.indexOf('upload') + 1).join('/');
+    // Remove file extension to get the public ID
+    const publicId = publicIdWithExtension.substring(0, publicIdWithExtension.lastIndexOf('.'));
+
+    // Delete the image from Cloudinary
+    await cloudinary.uploader.destroy(publicId);
+
+    // Delete the image from the database
+    await Image.findByIdAndDelete(imageId);
+
+    return { success: true, id: imageId };
+  } catch (error) {
+    console.error("Image deletion error:", error);
+    throw new Error("Failed to delete image: " + error.message);
+  }
+}
+
+module.exports = { generateImage, modifyImage, deleteImage };
