@@ -15,7 +15,7 @@ The project is structured into two main parts:
 
 ### Frontend (Angular)
 
-- Built with Angular 19
+- Built with Angular v20
 - Uses TailwindCSS for styling
 - Communicates with the backend API for image processing
 
@@ -29,7 +29,7 @@ The project is structured into two main parts:
 ## Technologies Used
 
 - **Frontend**:
-  - Angular 19
+  - Angular v20
   - TailwindCSS
   - RxJS
   
