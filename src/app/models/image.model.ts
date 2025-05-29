@@ -3,10 +3,13 @@ export interface ImageResponse {
   imageUrl: string;
 }
 
-export interface Image {
+export interface ImageData {
   _id: string;
+  type: string;
   prompt: string;
-  imageUrl: string;
+  imagePath: string;
   createdAt: string;
-  type?: string; // Add this optional field
+  __v: number;
 }
+
+export type ImageDataArray = ImageData[];

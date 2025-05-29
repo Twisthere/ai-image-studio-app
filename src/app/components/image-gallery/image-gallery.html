@@ -16,24 +16,22 @@
     <div class="bg-gray-100 p-6 rounded-lg text-center">
       <p class="text-gray-600">No images found. Try generating some!</p>
     </div>
-    }
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    } <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       @for (image of images(); track image._id) {
-      @if (image.imageUrl) {
+      @if (image.imagePath) {
       <div
         class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 border border-gray-200">
         <div class="relative pb-[56.25%]">
           <!-- Use standard img tag instead of NgOptimizedImage to handle variable aspect ratios -->
-          <img [src]="image.imageUrl" [alt]="image.prompt" class="absolute top-0 left-0 w-full h-full object-cover"
+          <img [src]="image.imagePath" [alt]="image.prompt" class="absolute top-0 left-0 w-full h-full object-cover"
             loading="lazy">
         </div>
         <div class="p-3">
           <p class="text-sm text-gray-600 line-clamp-2">{{ image.prompt }}</p>
-          <div class="flex justify-between items-center mt-2">
-            <span class="text-xs text-gray-500">{{ image.createdAt | date:'MMM d, y' }}</span>
+          <div class="flex justify-between items-center mt-2"> <span class="text-xs text-gray-500">{{ image.createdAt |
+              date:'MMM d, y' }}</span>
             <div class="flex space-x-2">
-              <a [href]="image.imageUrl" target="_blank" class="text-blue-600 hover:text-blue-800">
+              <a [href]="image.imagePath" target="_blank" class="text-blue-600 hover:text-blue-800">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path
                     d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
@@ -41,11 +39,14 @@
                 </svg>
               </a>
               <button (click)="deleteImage(image._id)" [disabled]="isDeleting(image._id)"
-                class="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed" title="Delete image">
+                class="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Delete image">
                 @if (isDeleting(image._id)) {
                 <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
                 </svg>
                 } @else {
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { Image } from '../../services/image';
+import { ImageData, ImageDataArray } from '../../models/image.model';
 
 @Component({
   selector: 'app-image-gallery',
@@ -12,7 +13,7 @@ export class ImageGallery {
   private imageService = inject(Image);
 
   // Add signal to track deletions in progress
-  readonly deletingImageIds = signal<Set<any>>(new Set());
+  readonly deletingImageIds = signal<Set<string>>(new Set());
 
   get images() {
     return this.imageService.images;
@@ -29,14 +30,13 @@ export class ImageGallery {
   ngOnInit(): void {
     this.loadImages();
   }
-
   loadImages(): void {
     this.imageService.getImages().subscribe({
-      next: (images: any) => {
+      next: (images: ImageData[]) => {
         // Images loaded successfully
         console.log('Loaded images:', images.length);
       },
-      error: (err: any) => {
+      error: (err: Error) => {
         console.error('Failed to load images:', err);
       },
     });
@@ -62,8 +62,7 @@ export class ImageGallery {
             ids.delete(imageId);
             return new Set(ids);
           });
-        },
-        error: (err: any) => {
+        },        error: (err: Error) => {
           console.error('Failed to delete image:', err);
           // Remove from set of deleting images
           this.deletingImageIds.update((ids) => {

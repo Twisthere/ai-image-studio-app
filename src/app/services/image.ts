@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, map, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment.development';
-import { ImageResponse } from '../models/image.model';
+import { ImageResponse, ImageData, ImageDataArray } from '../models/image.model';
 
 @Injectable({
   providedIn: 'root',
@@ -12,10 +12,9 @@ export class Image {
   private http = inject(HttpClient);
 
   // State management with signals
-  images = signal<any[]>([]);
+  images = signal<ImageDataArray>([]);
   isLoading = signal<boolean>(false);
   error = signal<string | null>(null);
-
   generateImage(prompt: string): Observable<string> {
     this.isLoading.set(true);
     this.error.set(null);
@@ -23,15 +22,17 @@ export class Image {
     return this.http
       .post<ImageResponse>(`${this.apiURL}/generate`, { prompt })
       .pipe(
-        map((response:any) => response.imageUrl),
+        map((response: ImageResponse) => response.imageUrl),
         tap({
-          next: (imageUrl:any) => {
+          next: (imageUrl: string) => {
             // Create an image object and update the images collection
-            const newImage: any = {
+            const newImage: ImageData = {
               _id: Date.now().toString(), // Temporary ID until we get the real one from backend
               prompt: prompt,
-              imageUrl: imageUrl,
+              imagePath: imageUrl,
               createdAt: new Date().toISOString(),
+              type: 'generated',
+              __v: 0
             };
             this.updateImages(newImage);
             this.isLoading.set(false);
@@ -57,12 +58,10 @@ export class Image {
     // Create FormData to handle file upload
     const formData = new FormData();
     formData.append('image', file);
-    formData.append('prompt', prompt);
-
-    return this.http
+    formData.append('prompt', prompt);    return this.http
       .post<ImageResponse>(`${this.apiURL}/modify`, formData)
       .pipe(
-        map((response) => response.imageUrl),
+        map((response: ImageResponse) => response.imageUrl),
         tap({
           next: () => this.isLoading.set(false),
           error: (err) => {
@@ -78,24 +77,23 @@ export class Image {
         })
       );
   }
-
-  getImages(): Observable<Image[]> {
+  getImages(): Observable<ImageData[]> {
     this.isLoading.set(true);
     this.error.set(null);
 
-    return this.http.get<any[]>(`${this.apiURL}/all`).pipe(
-      map((images) =>
+    return this.http.get<ImageDataArray>(`${this.apiURL}/all`).pipe(      map((images) =>
         images
           .filter((img) => img && img.imagePath)
           .map((img) => ({
             _id: img._id,
             prompt: img.prompt,
-            imageUrl: img.imagePath, // Map imagePath to imageUrl
+            imagePath: img.imagePath,
             createdAt: img.createdAt,
-            type: img.type, // Optional: you can include this if needed
+            type: img.type || 'generated',
+            __v: img.__v || 0
           }))
       ),
-      tap((response:any) => this.images.set(response)),
+      tap((response: ImageData[]) => this.images.set(response)),
       tap({
         next: () => this.isLoading.set(false),
         error: (err) => {
@@ -111,17 +109,15 @@ export class Image {
       })
     );
   }
-
-  deleteImage(imageId: string): Observable<any> {
+  deleteImage(imageId: string): Observable<{ success: boolean; message: string }> {
     this.isLoading.set(true);
     this.error.set(null);
 
-    return this.http.delete<any>(`${this.apiURL}/${imageId}`).pipe(
+    return this.http.delete<{ success: boolean; message: string }>(`${this.apiURL}/${imageId}`).pipe(
       tap({
-        next: (response) => {
-          // Remove the deleted image from the images signal
+        next: (response: { success: boolean; message: string }) => {          // Remove the deleted image from the images signal
           const currentImages = this.images();
-          this.images.set(currentImages.filter((img:any) => img._id !== imageId));
+          this.images.set(currentImages.filter((img: ImageData) => img._id !== imageId));
           this.isLoading.set(false);
         },
         error: (err) => {
@@ -138,7 +134,7 @@ export class Image {
     );
   }
 
-  private updateImages(newImage: Image): void {
+  private updateImages(newImage: ImageData): void {
     const currentImages = this.images();
     this.images.set([newImage, ...currentImages]);
   }

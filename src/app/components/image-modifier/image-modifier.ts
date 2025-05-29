@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Image } from '../../services/image';
+import { ImageResponse } from '../../models/image.model';
 
 @Component({
   selector: 'app-image-modifier',
@@ -18,21 +19,20 @@ export class ImageModifier {
   imageService = inject(Image);
 
   constructor() {}
-
-  onFileChange(event: any) {
-    const file = event.target.files[0];
+  onFileChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const file = target.files ? target.files[0] : null;
     if (file) {
       this.selectedFile.set(file);
 
       // Create image preview
       const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.previewImage.set(e.target.result);
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        this.previewImage.set(e.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
   }
-
   modify() {
     if (!this.selectedFile() || !this.prompt().trim()) return;
 
@@ -40,11 +40,11 @@ export class ImageModifier {
     this.imageService
       .modifyImage(this.selectedFile()!, this.prompt())
       .subscribe({
-        next: (modifiedImageUrl: any) => {
+        next: (modifiedImageUrl: string) => {
           this.modifiedImage.set(modifiedImageUrl);
           this.loading.set(false);
         },
-        error: (error: any) => {
+        error: (error: Error) => {
           console.error('Error modifying image:', error);
           // Handle error - maybe add an error message to the UI
           this.loading.set(false);
