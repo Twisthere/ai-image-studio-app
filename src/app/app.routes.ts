@@ -4,26 +4,26 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pages/home/home.component').then((m) => m.HomeComponent),
+      import('./pages/home/home').then((m) => m.Home),
   },
   {
     path: 'generate',
     loadComponent: () =>
-      import('./pages/generate/generate.component').then(
-        (m) => m.GenerateComponent
+      import('./pages/generate/generate').then(
+        (m) => m.Generate
       ),
   },
   {
     path: 'modify',
     loadComponent: () =>
-      import('./pages/modify/modify.component').then((m) => m.ModifyComponent),
+      import('./pages/modify/modify').then((m) => m.Modify),
   },
   {
     path: 'gallery',
     loadComponent: () =>
-      import('./pages/gallery/gallery.component').then(
-        (m) => m.GalleryComponent
+      import('./pages/gallery/gallery').then(
+        (m) => m.Gallery
       ),
   },
-  { path: '**', redirectTo: '' }, // Redirect any unknown paths to home
+  { path: '**', redirectTo: '' },
 ];

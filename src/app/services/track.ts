@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { Observable, catchError, finalize, map, tap, throwError } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { Observable, map, tap, catchError, throwError, finalize } from 'rxjs';
+import { environment } from '../../environments/environment.development';
 import { Visit } from '../models/visit.model';
 
 @Injectable({
   providedIn: 'root',
 })
-export class TrackService {
+export class Track {
   private readonly apiURL = environment.trackingApiUrl;
   private readonly http = inject(HttpClient);
 
@@ -24,12 +24,13 @@ export class TrackService {
   trackVisitRx(projectName: string): Observable<number> {
     this.isLoading.set(true);
     this.error.set(null);
-    
+
     return this.http.post<Visit>(this.apiURL, { projectName }).pipe(
-      map(response => response.uniqueVisitors),
-      tap(count => this.visitorCount.set(count)),
-      catchError(err => {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to track visit';
+      map((response) => response.uniqueVisitors),
+      tap((count) => this.visitorCount.set(count)),
+      catchError((err) => {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to track visit';
         this.error.set(errorMessage);
         return throwError(() => new Error(errorMessage));
       }),

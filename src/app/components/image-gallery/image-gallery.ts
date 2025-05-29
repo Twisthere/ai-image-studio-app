@@ -1,18 +1,18 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ImageService } from '../../services/image.service';
+import { Component, inject, signal } from '@angular/core';
+import { Image } from '../../services/image';
 
 @Component({
   selector: 'app-image-gallery',
   imports: [DatePipe],
-  templateUrl: './image-gallery.component.html',
-  styleUrl: './image-gallery.component.css',
+  templateUrl: './image-gallery.html',
+  styleUrl: './image-gallery.css',
 })
-export class ImageGalleryComponent implements OnInit {
-  private imageService = inject(ImageService);
-  
+export class ImageGallery {
+  private imageService = inject(Image);
+
   // Add signal to track deletions in progress
-  readonly deletingImageIds = signal<Set<string>>(new Set());
+  readonly deletingImageIds = signal<Set<any>>(new Set());
 
   get images() {
     return this.imageService.images;
@@ -32,41 +32,45 @@ export class ImageGalleryComponent implements OnInit {
 
   loadImages(): void {
     this.imageService.getImages().subscribe({
-      next: (images) => {
+      next: (images: any) => {
         // Images loaded successfully
         console.log('Loaded images:', images.length);
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Failed to load images:', err);
       },
     });
   }
 
   deleteImage(imageId: string): void {
-    if (confirm('Are you sure you want to delete this image? This action cannot be undone.')) {
+    if (
+      confirm(
+        'Are you sure you want to delete this image? This action cannot be undone.'
+      )
+    ) {
       // Add to set of deleting images
-      this.deletingImageIds.update(ids => {
+      this.deletingImageIds.update((ids) => {
         ids.add(imageId);
         return new Set(ids);
       });
-      
+
       this.imageService.deleteImage(imageId).subscribe({
         next: () => {
           console.log('Image deleted successfully');
           // Remove from set of deleting images
-          this.deletingImageIds.update(ids => {
+          this.deletingImageIds.update((ids) => {
             ids.delete(imageId);
             return new Set(ids);
           });
         },
-        error: (err) => {
+        error: (err: any) => {
           console.error('Failed to delete image:', err);
           // Remove from set of deleting images
-          this.deletingImageIds.update(ids => {
+          this.deletingImageIds.update((ids) => {
             ids.delete(imageId);
             return new Set(ids);
           });
-        }
+        },
       });
     }
   }

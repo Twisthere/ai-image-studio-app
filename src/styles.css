@@ -7,11 +7,11 @@
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
     @apply antialiased text-gray-800;
   }
-  
+
   /* Mobile-first responsive styles */
   @media (max-width: 640px) {
     .container {

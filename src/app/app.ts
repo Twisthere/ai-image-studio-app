@@ -1,38 +1,19 @@
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  OnInit,
-  signal,
-} from '@angular/core';
-import {
-  RouterOutlet,
-  RouterModule,
-  RouterLink,
-  RouterLinkActive,
-} from '@angular/router';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Meta } from '@angular/platform-browser';
-import { TrackService } from './services/track.service';
-import { catchError, finalize, tap } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { tap, catchError, of, finalize } from 'rxjs';
+import { Track } from './services/track';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
-  imports: [
-    RouterOutlet,
-    RouterModule,
-    RouterLink,
-    RouterLinkActive,
-  ],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css',
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  templateUrl: './app.html',
+  styleUrl: './app.css',
 })
-export class AppComponent implements OnInit {
-  readonly title = 'ai-image-studio-app';
+export class App {
+  protected title = 'ai-image-studio-app';
 
-  private readonly trackService = inject(TrackService);
+  private readonly trackService = inject(Track);
   private readonly meta = inject(Meta);
 
   // Theme state
