@@ -16,9 +16,32 @@ const app = express();
 app.use(helmet());
 
 // CORS configuration
+const allowedOrigins = [
+  'https://ai-image-studio-app.vercel.app',
+  'https://ai-image-studio-app-frontend.vercel.app',
+  'http://localhost:4200',
+  'http://localhost:5000'
+];
+
+// Add FRONTEND_URL from environment if it exists
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Body parsing middleware
@@ -51,6 +74,19 @@ app.get("/health", (req, res) => {
   });
 });
 
+// CORS test endpoint
+app.get("/cors-test", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "CORS is working correctly",
+    origin: req.headers.origin,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Handle preflight requests
+app.options('*', cors());
+
 // API routes
 app.use("/api/image", imageRoutes);
 
@@ -62,6 +98,7 @@ app.get("/", (req, res) => {
     version: "1.0.0",
     endpoints: {
       health: "/health",
+      corsTest: "/cors-test",
       generate: "/api/image/generate",
       modify: "/api/image/modify",
       getAll: "/api/image/all",
@@ -86,7 +123,7 @@ app.use(errorHandler);
 connectDB();
 
 // Start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`, {
     port: PORT,

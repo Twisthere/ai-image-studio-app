@@ -56,6 +56,12 @@ const errorHandler = (err, req, res, next) => {
     error = new AppError(message, 400);
   }
 
+  // CORS errors
+  if (err.message === 'Not allowed by CORS') {
+    const message = 'CORS policy violation';
+    error = new AppError(message, 403);
+  }
+
   res.status(error.statusCode || 500).json({
     success: false,
     error: error.message || 'Server Error',

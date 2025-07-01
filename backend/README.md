@@ -13,9 +13,10 @@ A robust Node.js/Express backend for AI-powered image generation and modificatio
 - Centralized error handling
 - RESTful API with consistent responses
 - File upload handling with Multer
-- CORS configuration for frontend integration
-- Health check endpoints
+- **Enhanced CORS configuration** for production deployments
+- Health check and CORS test endpoints
 - Graceful shutdown handling
+- **Production-ready Vercel deployment** with proper CORS headers
 
 ## Project Structure
 
@@ -67,7 +68,7 @@ Create a `.env` file based on `.example.env` with the following variables:
 - `CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name
 - `CLOUDINARY_API_KEY` - Cloudinary API key
 - `CLOUDINARY_API_SECRET` - Cloudinary API secret
-- `FRONTEND_URL` - Frontend application URL
+- `FRONTEND_URL` - Frontend application URL (e.g., `https://ai-image-studio-app.vercel.app`)
 
 ### Optional Variables
 
@@ -80,9 +81,11 @@ Create a `.env` file based on `.example.env` with the following variables:
 
 ## API Endpoints
 
-### Health Check
+### System Endpoints
 
+- `GET /` - API information and available endpoints
 - `GET /health` - Server health status
+- `GET /cors-test` - CORS configuration test endpoint
 
 ### Image Generation
 
@@ -139,6 +142,41 @@ Create a `.env` file based on `.example.env` with the following variables:
 - `GET /api/image/:id` - Get specific image by ID
 - `DELETE /api/image/:id` - Delete image by ID
 
+## CORS Configuration
+
+The API implements a robust CORS configuration that:
+
+- **Explicit Origin Validation** - Only allows requests from specified domains
+- **Production Ready** - Supports Vercel deployments with proper domain handling
+- **Development Support** - Includes localhost origins for development
+- **Preflight Handling** - Properly handles OPTIONS requests
+- **Security Headers** - Includes necessary CORS headers for secure communication
+
+### Allowed Origins
+
+The backend is configured to accept requests from:
+
+- `https://ai-image-studio-app.vercel.app` (Production frontend)
+- `https://ai-image-studio-app-frontend.vercel.app` (Alternative frontend domain)
+- `http://localhost:4200` (Angular development server)
+- `http://localhost:5000` (Backend development server)
+- Custom domains specified in `FRONTEND_URL` environment variable
+
+### Testing CORS
+
+To test if CORS is working correctly:
+
+1. **Test the CORS endpoint:**
+
+   ```bash
+   curl -H "Origin: https://ai-image-studio-app.vercel.app" \
+        https://your-backend-url.vercel.app/cors-test
+   ```
+
+2. **Check browser console** for CORS errors when making requests from your frontend
+
+3. **Verify environment variables** are set correctly in Vercel dashboard
+
 ## Rate Limiting
 
 The API implements multiple layers of rate limiting:
@@ -150,11 +188,12 @@ The API implements multiple layers of rate limiting:
 ## Security Features
 
 - **Helmet.js** - Security headers
-- **CORS** - Cross-origin resource sharing configuration
+- **Enhanced CORS** - Production-ready cross-origin resource sharing with explicit origin validation
 - **Rate Limiting** - Protection against abuse
 - **Input Validation** - Request data validation
 - **File Upload Validation** - Secure file handling
 - **Request Logging** - Comprehensive request tracking
+- **Preflight Request Handling** - Proper OPTIONS request support
 
 ## Error Handling
 
@@ -165,6 +204,7 @@ The API uses a centralized error handling system:
 - **Validation Errors** - Detailed validation feedback
 - **Database Errors** - MongoDB error handling
 - **Service Errors** - External API error handling
+- **CORS Errors** - Proper CORS policy violation handling
 
 ### Error Response Format
 
@@ -241,7 +281,7 @@ npm start
 
 ### Vercel Deployment
 
-The project includes `vercel.json` for easy deployment to Vercel:
+The project includes `vercel.json` for easy deployment to Vercel with proper CORS headers:
 
 ```json
 {
@@ -255,11 +295,28 @@ The project includes `vercel.json` for easy deployment to Vercel:
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "index.js"
+      "dest": "index.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://ai-image-studio-app.vercel.app",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+        "Access-Control-Allow-Credentials": "true"
+      }
     }
   ]
 }
 ```
+
+#### Vercel Environment Variables Setup
+
+For production deployment on Vercel, set these environment variables in your Vercel dashboard:
+
+1. Go to your Vercel dashboard → Project Settings → Environment Variables
+2. Add all required variables from the Environment Variables section above
+3. Set `FRONTEND_URL` to your actual frontend domain (e.g., `https://ai-image-studio-app.vercel.app`)
+4. Redeploy your application
+
+**Important:** The `FRONTEND_URL` environment variable is crucial for CORS to work properly in production.
 
 ## Testing
 
@@ -293,6 +350,13 @@ Currently, the project doesn't include automated tests. To add testing:
    - Check rate limit configuration
    - Monitor request frequency
    - Adjust limits if needed
+
+5. **CORS Issues**
+   - Verify `FRONTEND_URL` environment variable is set correctly
+   - Check that the frontend domain matches the allowed origins
+   - Test the `/cors-test` endpoint to verify CORS configuration
+   - Ensure Vercel environment variables are properly configured
+   - Clear browser cache and try again
 
 ### Logs
 
