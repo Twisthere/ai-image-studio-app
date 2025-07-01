@@ -52,3 +52,14 @@
     max-width: 1280px;
   }
 }
+
+/* Custom placeholder color for better visibility */
+input::placeholder, textarea::placeholder {
+  color: #a0aec0; /* Tailwind gray-400 */
+  opacity: 1;
+}
+
+.dark input::placeholder, .dark textarea::placeholder {
+  color: #4b5563; /* Tailwind gray-600 for dark mode */
+  opacity: 1;
+}
