@@ -1,56 +1,68 @@
 const express = require("express");
-const { generateImage, modifyImage, deleteImage } = require("../services/geminiService");
-const upload = require("../middleware/uploadMiddleware");
+const rateLimit = require('express-rate-limit');
+const {
+  generateNewImage,
+  modifyExistingImage,
+  getAllImages,
+  deleteImageById,
+  getImageById
+} = require("../controllers/imageController");
+const {
+  validateImageGeneration,
+  validateImageModification,
+  validateImageId
+} = require("../middleware/validation");
+const uploadMiddleware = require("../middleware/uploadMiddleware");
+
 const router = express.Router();
 
-router.post("/generate", async (req, res) => {
-  try {
-    const { prompt } = req.body;
-    if (!prompt) return res.status(400).json({ error: "Prompt is required" });
-
-    const imageUrl = await generateImage(prompt);
-    
-    res.json({ message: "Image generated successfully", imageUrl });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+// Rate limiting for image generation and modification
+const imageGenerationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many image generation requests, please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
-router.post("/modify", upload.single("image"), async (req, res) => {
-  try {
-    const { prompt } = req.body;
-    if (!prompt || !req.file) return res.status(400).json({ error: "Prompt and image are required" });
-
-    // Pass the buffer directly to the modifyImage function
-    const imageUrl = await modifyImage(prompt, req.file.buffer);
-    res.json({ message: "Image modified successfully", imageUrl });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+const imageModificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // limit each IP to 15 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many image modification requests, please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
-router.get("/all", async (req, res) => {
-  try {
-    const Image = require("../models/Image");
-    const images = await Image.find().sort({ createdAt: -1 });
-    
-    res.json(images);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// Routes
+router.post("/generate",
+  imageGenerationLimiter,
+  validateImageGeneration,
+  generateNewImage
+);
 
-// Add a new route to delete an image
-router.delete("/:id", async (req, res) => {
-  try {
-    const imageId = req.params.id;
-    if (!imageId) return res.status(400).json({ error: "Image ID is required" });
-    
-    const result = await deleteImage(imageId);
-    res.json({ message: "Image deleted successfully", result });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.post("/modify",
+  imageModificationLimiter,
+  uploadMiddleware,
+  validateImageModification,
+  modifyExistingImage
+);
+
+router.get("/all", getAllImages);
+
+router.get("/:id",
+  validateImageId,
+  getImageById
+);
+
+router.delete("/:id",
+  validateImageId,
+  deleteImageById
+);
 
 module.exports = router;

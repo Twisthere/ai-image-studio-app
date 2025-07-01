@@ -1,14 +1,69 @@
-
 const { GoogleGenAI, Modality } = require("@google/genai");
-const path = require("path");
 const { cloudinary } = require("../config/cloudinary");
 const Image = require("../models/Image");
+const { AppError } = require("../middleware/errorHandler");
+const logger = require("../config/logger");
 
-const genAI = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+/**
+ * Upload image buffer to Cloudinary
+ * @param {Buffer} imageBuffer - Image buffer to upload
+ * @param {string} folder - Cloudinary folder path
+ * @returns {Promise<string>} Cloudinary URL
+ */
+async function uploadToCloudinary(imageBuffer, folder) {
+  try {
+    const base64Image = imageBuffer.toString('base64');
+    const result = await cloudinary.uploader.upload(`data:image/png;base64,${base64Image}`, {
+      folder,
+      resource_type: "image",
+      transformation: [
+        { quality: "auto:good" },
+        { fetch_format: "auto" }
+      ]
+    });
+
+    logger.info(`Image uploaded to Cloudinary`, {
+      publicId: result.public_id,
+      url: result.secure_url
+    });
+
+    return result.secure_url;
+  } catch (error) {
+    logger.error('Cloudinary upload error:', error);
+    throw new AppError('Failed to upload image to cloud storage', 500);
+  }
+}
+
+/**
+ * Extract image data from Gemini API response
+ * @param {Object} response - Gemini API response
+ * @returns {string|null} Base64 image data or null
+ */
+function extractImageFromResponse(response) {
+  if (!response.candidates?.[0]?.content?.parts) {
+    return null;
+  }
+
+  for (const part of response.candidates[0].content.parts) {
+    if (part.inlineData) {
+      return part.inlineData.data;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Generate image using Gemini AI
+ * @param {string} prompt - Text prompt for image generation
+ * @returns {Promise<string>} Generated image URL
+ */
 async function generateImage(prompt) {
   try {
-        // Generate the image using the new API syntax
+    logger.info('Starting image generation with Gemini AI', { prompt: prompt.substring(0, 50) });
+
     const response = await genAI.models.generateContent({
       model: "gemini-2.0-flash-preview-image-generation",
       contents: prompt,
@@ -16,29 +71,18 @@ async function generateImage(prompt) {
         responseModalities: [Modality.TEXT, Modality.IMAGE],
       },
     });
-    let imageUrl = null;
 
-    // Process the response to extract the generated image
-    if (response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts) {
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          // Get the base64 image data
-          const imageData = part.inlineData.data;
+    const imageData = extractImageFromResponse(response);
 
-          // Upload the base64 image to Cloudinary
-          const result = await cloudinary.uploader.upload(`data:image/png;base64,${imageData}`, {
-            folder: "ai-image-studio/generated",
-            resource_type: "image"
-          });
-
-          imageUrl = result.secure_url;
-        }
-      }
+    if (!imageData) {
+      throw new AppError('Failed to generate image from AI service', 500);
     }
 
-    if (!imageUrl) {
-      throw new Error("Failed to generate image");
-    }
+    // Upload to Cloudinary
+    const imageUrl = await uploadToCloudinary(
+      Buffer.from(imageData, 'base64'),
+      "ai-image-studio/generated"
+    );
 
     // Save to database
     const newImage = new Image({
@@ -48,26 +92,33 @@ async function generateImage(prompt) {
     });
     await newImage.save();
 
+    logger.info('Image generated and saved successfully', {
+      imageId: newImage._id,
+      imageUrl
+    });
+
     return imageUrl;
   } catch (error) {
-    console.error("Image generation error:", error);
-    throw new Error("Failed to generate image: " + error.message);
+    logger.error('Image generation error:', error);
+
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError('Failed to generate image: ' + error.message, 500);
   }
 }
 
-// Helper function to upload buffer directly to Cloudinary
-async function uploadToCloudinary(imageBuffer) {
-  const base64Image = imageBuffer.toString('base64');
-  const result = await cloudinary.uploader.upload(`data:image/png;base64,${base64Image}`, {
-    folder: "ai-image-studio/modified",
-    resource_type: "image"
-  });
-  return result.secure_url;
-}
-
-// Example implementation for modifyImage in geminiService.js
+/**
+ * Modify image using Gemini AI
+ * @param {string} prompt - Text prompt for image modification
+ * @param {Buffer} imageBuffer - Original image buffer
+ * @returns {Promise<string>} Modified image URL
+ */
 async function modifyImage(prompt, imageBuffer) {
   try {
+    logger.info('Starting image modification with Gemini AI', { prompt: prompt.substring(0, 50) });
+
     // Convert buffer to base64 for Gemini API
     const base64Image = imageBuffer.toString('base64');
 
@@ -82,7 +133,6 @@ async function modifyImage(prompt, imageBuffer) {
     // Prepare the prompt for image modification
     const fullPrompt = `Modify this image according to the following instructions: ${prompt}`;
 
-    // Generate the modified image using the new API syntax
     const response = await genAI.models.generateContent({
       model: "gemini-2.0-flash-preview-image-generation",
       contents: [imagePart, fullPrompt],
@@ -90,73 +140,96 @@ async function modifyImage(prompt, imageBuffer) {
         responseModalities: [Modality.TEXT, Modality.IMAGE],
       },
     });
-    let modifiedImageUrl = null;
 
-    // Process the response to extract the modified image
-    if (response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts) {
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          // Get the base64 image data
-          const imageData = part.inlineData.data;
+    const imageData = extractImageFromResponse(response);
 
-          // Upload the base64 image to Cloudinary
-          const result = await cloudinary.uploader.upload(`data:image/png;base64,${imageData}`, {
-            folder: "ai-image-studio/modified",
-            resource_type: "image"
-          });
-
-          modifiedImageUrl = result.secure_url;
-        }
-      }
+    if (!imageData) {
+      throw new AppError('Failed to modify image from AI service', 500);
     }
 
-    if (!modifiedImageUrl) {
-      throw new Error("Failed to modify image");
-    }
+    // Upload to Cloudinary
+    const imageUrl = await uploadToCloudinary(
+      Buffer.from(imageData, 'base64'),
+      "ai-image-studio/modified"
+    );
 
     // Save to database
     const newImage = new Image({
       type: "modified",
       prompt,
-      imagePath: modifiedImageUrl
+      imagePath: imageUrl
     });
     await newImage.save();
 
-    return modifiedImageUrl;
+    logger.info('Image modified and saved successfully', {
+      imageId: newImage._id,
+      imageUrl
+    });
+
+    return imageUrl;
   } catch (error) {
-    console.error("Image modification error:", error);
-    throw new Error("Failed to modify image: " + error.message);
+    logger.error('Image modification error:', error);
+
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError('Failed to modify image: ' + error.message, 500);
   }
 }
 
-// Function to delete an image from both database and Cloudinary
+/**
+ * Delete image from both database and Cloudinary
+ * @param {string} imageId - MongoDB image ID
+ * @returns {Promise<Object>} Deletion result
+ */
 async function deleteImage(imageId) {
   try {
+    logger.info('Starting image deletion', { imageId });
+
     // Find the image in the database
     const image = await Image.findById(imageId);
     if (!image) {
-      throw new Error("Image not found");
+      throw new AppError('Image not found', 404);
     }
 
     // Extract the Cloudinary public ID from the URL
-    // Cloudinary URLs are typically like: https://res.cloudinary.com/cloud-name/image/upload/v1234567890/folder/public-id.jpg
     const urlParts = image.imagePath.split('/');
+    const uploadIndex = urlParts.indexOf('upload');
+
+    if (uploadIndex === -1) {
+      throw new AppError('Invalid Cloudinary URL format', 400);
+    }
+
     // Get the filename including the folder path after the /upload/ part
-    const publicIdWithExtension = urlParts.slice(urlParts.indexOf('upload') + 1).join('/');
+    const publicIdWithExtension = urlParts.slice(uploadIndex + 1).join('/');
     // Remove file extension to get the public ID
     const publicId = publicIdWithExtension.substring(0, publicIdWithExtension.lastIndexOf('.'));
 
     // Delete the image from Cloudinary
     await cloudinary.uploader.destroy(publicId);
 
+    logger.info('Image deleted from Cloudinary', { publicId });
+
     // Delete the image from the database
     await Image.findByIdAndDelete(imageId);
 
+    logger.info('Image deleted from database', { imageId });
+
     return { success: true, id: imageId };
   } catch (error) {
-    console.error("Image deletion error:", error);
-    throw new Error("Failed to delete image: " + error.message);
+    logger.error('Image deletion error:', error);
+
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError('Failed to delete image: ' + error.message, 500);
   }
 }
 
-module.exports = { generateImage, modifyImage, deleteImage };
+module.exports = {
+  generateImage,
+  modifyImage,
+  deleteImage
+};
