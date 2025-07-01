@@ -37,7 +37,7 @@ The project is structured into two main parts:
   - Node.js
   - Express.js
   - MongoDB/Mongoose
-  - Google Generative AI (@google/generative-ai)
+  - Google Generative AI (@google/genai)
   - Cloudinary
   - Multer for file handling
 

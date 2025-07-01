@@ -1,38 +1,38 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const fs = require("fs");
-const path = require("path");
-const Image = require("../models/Image");
-const { cloudinary } = require("../config/cloudinary");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const { GoogleGenAI, Modality } = require("@google/genai");
+const path = require("path");
+const { cloudinary } = require("../config/cloudinary");
+const Image = require("../models/Image");
+
+const genAI = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
 
 async function generateImage(prompt) {
   try {
-    // Initialize the Gemini model with image generation capabilities
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-exp-image-generation",
-      generationConfig: {
-        responseModalities: ['Text', 'Image']
+        // Generate the image using the new API syntax
+    const response = await genAI.models.generateContent({
+      model: "gemini-2.0-flash-preview-image-generation",
+      contents: prompt,
+      config: {
+        responseModalities: [Modality.TEXT, Modality.IMAGE],
       },
     });
-
-    // Generate the image
-    const response = await model.generateContent(prompt);
     let imageUrl = null;
 
     // Process the response to extract the generated image
-    for (const part of response.response.candidates[0].content.parts) {
-      if (part.inlineData) {
-        // Get the base64 image data
-        const imageData = part.inlineData.data;
-        
-        // Upload the base64 image to Cloudinary
-        const result = await cloudinary.uploader.upload(`data:image/png;base64,${imageData}`, {
-          folder: "ai-image-studio/generated",
-          resource_type: "image"
-        });
-        
-        imageUrl = result.secure_url;
+    if (response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+          // Get the base64 image data
+          const imageData = part.inlineData.data;
+
+          // Upload the base64 image to Cloudinary
+          const result = await cloudinary.uploader.upload(`data:image/png;base64,${imageData}`, {
+            folder: "ai-image-studio/generated",
+            resource_type: "image"
+          });
+
+          imageUrl = result.secure_url;
+        }
       }
     }
 
@@ -47,7 +47,7 @@ async function generateImage(prompt) {
       imagePath: imageUrl
     });
     await newImage.save();
-    
+
     return imageUrl;
   } catch (error) {
     console.error("Image generation error:", error);
@@ -68,17 +68,9 @@ async function uploadToCloudinary(imageBuffer) {
 // Example implementation for modifyImage in geminiService.js
 async function modifyImage(prompt, imageBuffer) {
   try {
-    // Initialize the Gemini model for image editing
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-exp-image-generation",
-      generationConfig: {
-        responseModalities: ['Text', 'Image']
-      },
-    });
-
     // Convert buffer to base64 for Gemini API
     const base64Image = imageBuffer.toString('base64');
-    
+
     // Create the content parts array with the image and prompt
     const imagePart = {
       inlineData: {
@@ -86,27 +78,35 @@ async function modifyImage(prompt, imageBuffer) {
         mimeType: "image/png"
       }
     };
-    
+
     // Prepare the prompt for image modification
     const fullPrompt = `Modify this image according to the following instructions: ${prompt}`;
-    
-    // Generate the modified image
-    const response = await model.generateContent([imagePart, fullPrompt]);
+
+    // Generate the modified image using the new API syntax
+    const response = await genAI.models.generateContent({
+      model: "gemini-2.0-flash-preview-image-generation",
+      contents: [imagePart, fullPrompt],
+      config: {
+        responseModalities: [Modality.TEXT, Modality.IMAGE],
+      },
+    });
     let modifiedImageUrl = null;
-    
+
     // Process the response to extract the modified image
-    for (const part of response.response.candidates[0].content.parts) {
-      if (part.inlineData) {
-        // Get the base64 image data
-        const imageData = part.inlineData.data;
-        
-        // Upload the base64 image to Cloudinary
-        const result = await cloudinary.uploader.upload(`data:image/png;base64,${imageData}`, {
-          folder: "ai-image-studio/modified",
-          resource_type: "image"
-        });
-        
-        modifiedImageUrl = result.secure_url;
+    if (response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+          // Get the base64 image data
+          const imageData = part.inlineData.data;
+
+          // Upload the base64 image to Cloudinary
+          const result = await cloudinary.uploader.upload(`data:image/png;base64,${imageData}`, {
+            folder: "ai-image-studio/modified",
+            resource_type: "image"
+          });
+
+          modifiedImageUrl = result.secure_url;
+        }
       }
     }
 
@@ -121,7 +121,7 @@ async function modifyImage(prompt, imageBuffer) {
       imagePath: modifiedImageUrl
     });
     await newImage.save();
-    
+
     return modifiedImageUrl;
   } catch (error) {
     console.error("Image modification error:", error);
