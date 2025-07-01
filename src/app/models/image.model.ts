@@ -1,8 +1,3 @@
-export interface ImageResponse {
-  message?: string;
-  imageUrl: string;
-}
-
 export interface ImageData {
   _id: string;
   type: string;

@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Image } from '../../services/image';
-import { ImageResponse } from '../../models/image.model';
 
 @Component({
   selector: 'app-image-generator',
