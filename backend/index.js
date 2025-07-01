@@ -119,16 +119,15 @@ app.use("*", (req, res) => {
 // Global error handler (must be last)
 app.use(errorHandler);
 
-// Connect to database
-connectDB();
-
-// Start server
+// Connect to database and start server only after successful connection
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`, {
-    port: PORT,
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`, {
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      timestamp: new Date().toISOString()
+    });
   });
 });
 
