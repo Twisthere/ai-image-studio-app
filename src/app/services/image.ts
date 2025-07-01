@@ -17,6 +17,21 @@ interface ApiResponse<T> {
   };
 }
 
+// Pagination parameters interface
+interface PaginationParams {
+  page?: number;
+  limit?: number;
+  type?: 'generated' | 'modified';
+}
+
+// Pagination metadata interface
+interface PaginationMetadata {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -28,6 +43,7 @@ export class Image {
   images = signal<ImageDataArray>([]);
   isLoading = signal<boolean>(false);
   error = signal<string | null>(null);
+  pagination = signal<PaginationMetadata | null>(null);
 
   generateImage(prompt: string): Observable<string> {
     this.isLoading.set(true);
@@ -53,7 +69,8 @@ export class Image {
               type: 'generated',
               __v: 0,
             };
-            this.updateImages(newImage);
+            // Don't update images directly since we're using server-side pagination
+            // The gallery will need to refresh to see the new image
             this.isLoading.set(false);
           },
           error: (err) => {
@@ -105,15 +122,23 @@ export class Image {
       );
   }
 
-  getImages(): Observable<ImageData[]> {
+  getImages(params: PaginationParams = {}): Observable<{ images: ImageData[]; pagination: PaginationMetadata }> {
     this.isLoading.set(true);
     this.error.set(null);
 
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.set('page', params.page.toString());
+    if (params.limit) queryParams.set('limit', params.limit.toString());
+    if (params.type) queryParams.set('type', params.type);
+
+    const url = `${this.apiURL}/all${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+
     return this.http
-      .get<ApiResponse<ImageDataArray>>(`${this.apiURL}/all`)
+      .get<ApiResponse<ImageDataArray>>(url)
       .pipe(
-        map((response: ApiResponse<ImageDataArray>) =>
-          response.data
+        map((response: ApiResponse<ImageDataArray>) => {
+          const processedImages = response.data
             .filter((img) => img && img.imagePath)
             .map((img) => ({
               _id: img._id,
@@ -122,9 +147,17 @@ export class Image {
               createdAt: img.createdAt,
               type: img.type || 'generated',
               __v: img.__v || 0,
-            }))
-        ),
-        tap((processedImages) => this.images.set(processedImages)),
+            }));
+
+          return {
+            images: processedImages,
+            pagination: response.pagination!
+          };
+        }),
+        tap(({ images, pagination }) => {
+          this.images.set(images);
+          this.pagination.set(pagination);
+        }),
         tap({
           next: () => this.isLoading.set(false),
           error: (err) => {
@@ -179,8 +212,5 @@ export class Image {
       );
   }
 
-  private updateImages(newImage: ImageData): void {
-    const currentImages = this.images();
-    this.images.set([newImage, ...currentImages]);
-  }
+
 }

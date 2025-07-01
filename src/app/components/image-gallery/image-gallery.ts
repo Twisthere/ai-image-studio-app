@@ -15,6 +15,15 @@ export class ImageGallery implements OnInit {
   // Add signal to track deletions in progress
   readonly deletingImageIds = signal<Set<string>>(new Set());
 
+  // Make Math and parseInt available in template
+  Math = Math;
+  parseInt = parseInt;
+
+  // Pagination state
+  currentPage = 1;
+  itemsPerPage = 12;
+  selectedType: 'generated' | 'modified' | null = null;
+
   get images() {
     return this.imageService.images;
   }
@@ -27,14 +36,56 @@ export class ImageGallery implements OnInit {
     return this.imageService.error;
   }
 
+  get pagination() {
+    return this.imageService.pagination;
+  }
+
+  get totalPages() {
+    return this.pagination()?.totalPages || 0;
+  }
+
+  get pagesArray() {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  getVisiblePages(): number[] {
+    const current = this.currentPage;
+    const total = this.totalPages;
+    const delta = 2; // Number of pages to show on each side of current page
+
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+
+    // Adjust if we're near the beginning
+    if (current - delta <= 1) {
+      end = Math.min(total, 1 + delta * 2);
+    }
+
+    // Adjust if we're near the end
+    if (current + delta >= total) {
+      start = Math.max(1, total - delta * 2);
+    }
+
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }
+
   ngOnInit(): void {
     this.loadImages();
   }
 
   loadImages(): void {
-    this.imageService.getImages().subscribe({
-      next: (images: ImageData[]) => {
-        // Images loaded successfully
+    const params: any = {
+      page: this.currentPage,
+      limit: this.itemsPerPage
+    };
+
+    if (this.selectedType) {
+      params.type = this.selectedType;
+    }
+
+    this.imageService.getImages(params).subscribe({
+      next: ({ images, pagination }) => {
+        // Images loaded successfully with pagination data
       },
       error: (err: Error) => {
         console.error('Failed to load images:', err);
@@ -62,6 +113,8 @@ export class ImageGallery implements OnInit {
             ids.delete(imageId);
             return new Set(ids);
           });
+          // Reload current page to refresh the data
+          this.loadImages();
         },
         error: (err: Error) => {
           console.error('Failed to delete image:', err);
@@ -83,5 +136,41 @@ export class ImageGallery implements OnInit {
   getImageDimensions(imageUrl: string): { width: number; height: number } {
     // Default dimensions for Cloudinary images (close to typical AI generated images)
     return { width: 1024, height: 1024 };
+  }
+
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.loadImages();
+    }
+  }
+
+  goToPageFromInput(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const page = parseInt(target.value);
+    if (page && page >= 1 && page <= this.totalPages) {
+      this.goToPage(page);
+      target.value = ''; // Clear input after navigation
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadImages();
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadImages();
+    }
+  }
+
+  filterByType(type: 'generated' | 'modified' | null) {
+    this.selectedType = type;
+    this.currentPage = 1; // Reset to first page when filtering
+    this.loadImages();
   }
 }
