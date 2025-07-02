@@ -1,92 +1,76 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 import { Image } from '../../services/image';
-import { ImageData, ImageDataArray } from '../../models/image.model';
+import { ImageData } from '../../models/image.model';
 
 @Component({
   selector: 'app-image-gallery',
   imports: [DatePipe],
   templateUrl: './image-gallery.html',
   styleUrl: './image-gallery.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ImageGallery implements OnInit {
+export class ImageGallery {
   private imageService = inject(Image);
 
-  // Add signal to track deletions in progress
+  readonly currentPage = signal(1);
+  readonly itemsPerPage = signal(12);
+  readonly selectedType = signal<'generated' | 'modified' | null>(null);
   readonly deletingImageIds = signal<Set<string>>(new Set());
 
-  // Make Math and parseInt available in template
-  Math = Math;
-  parseInt = parseInt;
+  readonly images = computed(() => this.imageService.images());
+  readonly isLoading = computed(() => this.imageService.isLoading());
+  readonly error = computed(() => this.imageService.error());
+  readonly pagination = computed(() => this.imageService.pagination());
+  readonly totalPages = computed(() => this.pagination()?.totalPages || 0);
+  readonly pagesArray = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
 
-  // Pagination state
-  currentPage = 1;
-  itemsPerPage = 12;
-  selectedType: 'generated' | 'modified' | null = null;
-
-  get images() {
-    return this.imageService.images;
-  }
-
-  get isLoading() {
-    return this.imageService.isLoading;
-  }
-
-  get error() {
-    return this.imageService.error;
-  }
-
-  get pagination() {
-    return this.imageService.pagination;
-  }
-
-  get totalPages() {
-    return this.pagination()?.totalPages || 0;
-  }
-
-  get pagesArray() {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
-  }
-
-  getVisiblePages(): number[] {
-    const current = this.currentPage;
-    const total = this.totalPages;
-    const delta = 2; // Number of pages to show on each side of current page
-
+  readonly getVisiblePages = computed((): number[] => {
+    const current = this.currentPage();
+    const total = this.totalPages();
+    const delta = 2;
     let start = Math.max(1, current - delta);
     let end = Math.min(total, current + delta);
-
-    // Adjust if we're near the beginning
     if (current - delta <= 1) {
       end = Math.min(total, 1 + delta * 2);
     }
-
-    // Adjust if we're near the end
     if (current + delta >= total) {
       start = Math.max(1, total - delta * 2);
     }
-
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  }
+  });
 
-  ngOnInit(): void {
-    this.loadImages();
+  // Derived values for pagination info (to avoid Math in template)
+  readonly showingFrom = computed(() => {
+    const page = this.pagination()?.currentPage ?? 1;
+    const perPage = this.pagination()?.itemsPerPage ?? 12;
+    return (page - 1) * perPage + 1;
+  });
+
+  readonly showingTo = computed(() => {
+    const page = this.pagination()?.currentPage ?? 1;
+    const perPage = this.pagination()?.itemsPerPage ?? 12;
+    const total = this.pagination()?.totalItems ?? 0;
+    const to = page * perPage;
+    return to > total ? total : to;
+  });
+
+  constructor() {
+    effect(() => {
+      this.loadImages();
+    });
   }
 
   loadImages(): void {
     const params: any = {
-      page: this.currentPage,
-      limit: this.itemsPerPage
+      page: this.currentPage(),
+      limit: this.itemsPerPage(),
     };
-
-    if (this.selectedType) {
-      params.type = this.selectedType;
+    if (this.selectedType()) {
+      params.type = this.selectedType();
     }
-
     this.imageService.getImages(params).subscribe({
-      next: ({ images, pagination }) => {
-        // Images loaded successfully with pagination data
-      },
+      next: () => {},
       error: (err: Error) => {
         console.error('Failed to load images:', err);
       },
@@ -99,26 +83,20 @@ export class ImageGallery implements OnInit {
         'Are you sure you want to delete this image? This action cannot be undone.'
       )
     ) {
-      // Add to set of deleting images
       this.deletingImageIds.update((ids) => {
         ids.add(imageId);
         return new Set(ids);
       });
-
       this.imageService.deleteImage(imageId).subscribe({
         next: () => {
-          console.log('Image deleted successfully');
-          // Remove from set of deleting images
           this.deletingImageIds.update((ids) => {
             ids.delete(imageId);
             return new Set(ids);
           });
-          // Reload current page to refresh the data
           this.loadImages();
         },
         error: (err: Error) => {
           console.error('Failed to delete image:', err);
-          // Remove from set of deleting images
           this.deletingImageIds.update((ids) => {
             ids.delete(imageId);
             return new Set(ids);
@@ -132,45 +110,39 @@ export class ImageGallery implements OnInit {
     return this.deletingImageIds().has(imageId);
   }
 
-  // Helper method to handle different aspect ratios
   getImageDimensions(imageUrl: string): { width: number; height: number } {
-    // Default dimensions for Cloudinary images (close to typical AI generated images)
     return { width: 1024, height: 1024 };
   }
 
   goToPage(page: number) {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      this.loadImages();
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
     }
   }
 
   goToPageFromInput(event: Event) {
     const target = event.target as HTMLInputElement;
-    const page = parseInt(target.value);
-    if (page && page >= 1 && page <= this.totalPages) {
+    const page = Number(target.value);
+    if (page && page >= 1 && page <= this.totalPages()) {
       this.goToPage(page);
-      target.value = ''; // Clear input after navigation
+      target.value = '';
     }
   }
 
   nextPage() {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.loadImages();
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.set(this.currentPage() + 1);
     }
   }
 
   prevPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.loadImages();
+    if (this.currentPage() > 1) {
+      this.currentPage.set(this.currentPage() - 1);
     }
   }
 
   filterByType(type: 'generated' | 'modified' | null) {
-    this.selectedType = type;
-    this.currentPage = 1; // Reset to first page when filtering
-    this.loadImages();
+    this.selectedType.set(type);
+    this.currentPage.set(1);
   }
 }
