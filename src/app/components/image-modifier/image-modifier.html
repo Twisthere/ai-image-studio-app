@@ -23,12 +23,12 @@
   <div class="flex flex-col space-y-2">
     <label for="modification" class="text-sm font-medium text-gray-700 dark:text-gray-300">Modification
       Instructions</label>
-    <textarea id="modification" [ngModel]="prompt()" (ngModelChange)="prompt.set($event)" rows="3"
+    <textarea id="modification" [formControl]="promptControl" rows="3"
       class="p-3 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 w-full text-gray-800 dark:text-gray-200 dark:bg-gray-800"
       placeholder="Describe how you want to modify the image..."></textarea>
   </div>
 
-  <button (click)="modify()" [disabled]="!selectedFile() || !prompt().trim() || loading()"
+  <button (click)="modify()" [disabled]="!selectedFile() || !promptControl.value?.trim() || loading()"
     class="w-full md:w-auto px-6 py-2 bg-green-600 text-white font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50">
     @if (loading()) {
     <span>Modifying...</span>
@@ -55,7 +55,7 @@
         </svg>
       </a>
     </div>
-    <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">Modifications: "{{prompt()}}"</p>
+    <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">Modifications: "{{promptControl.value}}"</p>
   </div>
   }
 </div>

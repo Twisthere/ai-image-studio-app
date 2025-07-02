@@ -1,12 +1,12 @@
 <div class="space-y-4">
   <div class="flex flex-col space-y-2">
     <label for="prompt" class="text-sm font-medium text-gray-700 dark:text-gray-300">Image Description</label>
-    <textarea id="prompt" [ngModel]="prompt()" (ngModelChange)="prompt.set($event)" rows="3"
+    <textarea id="prompt" [formControl]="promptControl" rows="3"
       class="p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 w-full text-gray-800 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-700"
       placeholder="Describe the image you want to generate..."></textarea>
   </div>
 
-  <button (click)="generate()" [disabled]="!prompt().trim() || loading()"
+  <button (click)="generate()" [disabled]="!promptControl.value?.trim() || loading()"
     class="w-full md:w-auto px-6 py-2 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
     @if (loading()) {
     <span>Generating...</span>
@@ -34,7 +34,7 @@
         </svg>
       </a>
     </div>
-    <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">Prompt: "{{prompt()}}"</p>
+    <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">Prompt: "{{promptControl.value}}"</p>
   </div>
   }
 </div>

@@ -1,15 +1,16 @@
-import { Component, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Image } from '../../services/image';
 
 @Component({
   selector: 'app-image-modifier',
-  imports: [FormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './image-modifier.html',
   styleUrl: './image-modifier.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImageModifier {
-  prompt = signal<string>('');
+  promptControl = new FormControl('');
   selectedFile = signal<File | null>(null);
   previewImage = signal<string | null>(null);
   modifiedImage = signal<string | null>(null);
@@ -17,7 +18,6 @@ export class ImageModifier {
 
   imageService = inject(Image);
 
-  constructor() {}
   onFileChange(event: Event) {
     const target = event.target as HTMLInputElement;
     const file = target.files ? target.files[0] : null;
@@ -33,11 +33,11 @@ export class ImageModifier {
     }
   }
   modify() {
-    if (!this.selectedFile() || !this.prompt().trim()) return;
+    if (!this.selectedFile() || !this.promptControl.value?.trim()) return;
 
     this.loading.set(true);
     this.imageService
-      .modifyImage(this.selectedFile()!, this.prompt())
+      .modifyImage(this.selectedFile()!, this.promptControl.value!)
       .subscribe({
         next: (modifiedImageUrl: string) => {
           this.modifiedImage.set(modifiedImageUrl);

@@ -3,12 +3,14 @@ import { Meta } from '@angular/platform-browser';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { tap, catchError, of, finalize } from 'rxjs';
 import { Track } from './services/track';
+import { ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.html',
   styleUrl: './app.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
   protected title = 'ai-image-studio-app';

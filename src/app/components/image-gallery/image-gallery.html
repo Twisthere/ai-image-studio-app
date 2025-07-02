@@ -1,5 +1,40 @@
 <div class="container mx-auto px-4 py-6">
   <div>
+    <!-- Filter Controls -->
+    <div class="mb-8">
+      <div class="flex flex-wrap gap-3 justify-center">
+        <button (click)="filterByType(null)"
+          [class]="selectedType === null ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
+          class="px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16">
+            </path>
+          </svg>
+          <span>All Images</span>
+        </button>
+        <button (click)="filterByType('generated')"
+          [class]="selectedType === 'generated' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
+          class="px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4">
+            </path>
+          </svg>
+          <span>Generated</span>
+        </button>
+        <button (click)="filterByType('modified')"
+          [class]="selectedType === 'modified' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
+          class="px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+            </path>
+          </svg>
+          <span>Modified</span>
+        </button>
+      </div>
+    </div>
+
     @if (isLoading()) {
     <div class="flex items-center justify-center py-6">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
@@ -11,39 +46,6 @@
       <p>{{ error() }}</p>
     </div>
     }
-
-        <!-- Filter Controls -->
-    <div class="mb-8">
-      <div class="flex flex-wrap gap-3 justify-center">
-        <button
-          (click)="filterByType(null)"
-          [class]="selectedType === null ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
-          class="px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-          </svg>
-          <span>All Images</span>
-        </button>
-        <button
-          (click)="filterByType('generated')"
-          [class]="selectedType === 'generated' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
-          class="px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
-          </svg>
-          <span>Generated</span>
-        </button>
-        <button
-          (click)="filterByType('modified')"
-          [class]="selectedType === 'modified' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
-          class="px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-          </svg>
-          <span>Modified</span>
-        </button>
-      </div>
-    </div>
 
     @if (images().length === 0 && !isLoading()) {
     <div class="bg-gray-100 p-6 rounded-lg text-center">
@@ -119,9 +121,7 @@
       <!-- Modern Pagination Controls -->
       <div class="flex items-center justify-center space-x-2">
         <!-- Previous Button -->
-        <button
-          (click)="prevPage()"
-          [disabled]="currentPage === 1"
+        <button (click)="prevPage()" [disabled]="currentPage === 1"
           class="flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-gray-500 transition-all duration-200">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -133,8 +133,7 @@
         <div class="flex items-center space-x-1">
           <!-- First Page -->
           @if (currentPage > 3) {
-          <button
-            (click)="goToPage(1)"
+          <button (click)="goToPage(1)"
             class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all duration-200">
             1
           </button>
@@ -145,8 +144,7 @@
 
           <!-- Page Numbers Around Current -->
           @for (page of getVisiblePages(); track page) {
-          <button
-            (click)="goToPage(page)"
+          <button (click)="goToPage(page)"
             [class]="currentPage === page ? 'px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg' : 'px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700'"
             class="transition-all duration-200">
             {{ page }}
@@ -154,22 +152,18 @@
           }
 
           <!-- Last Page -->
-          @if (currentPage < totalPages - 2) {
-          @if (currentPage < totalPages - 3) {
-          <span class="px-2 text-gray-400">...</span>
-          }
-          <button
-            (click)="goToPage(totalPages)"
-            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all duration-200">
-            {{ totalPages }}
-          </button>
-          }
+          @if (currentPage < totalPages - 2) { @if (currentPage < totalPages - 3) { <span class="px-2 text-gray-400">
+            ...</span>
+            }
+            <button (click)="goToPage(totalPages)"
+              class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all duration-200">
+              {{ totalPages }}
+            </button>
+            }
         </div>
 
         <!-- Next Button -->
-        <button
-          (click)="nextPage()"
-          [disabled]="currentPage === totalPages"
+        <button (click)="nextPage()" [disabled]="currentPage === totalPages"
           class="flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-gray-500 transition-all duration-200">
           Next
           <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,20 +172,14 @@
         </button>
       </div>
 
-            <!-- Quick Jump -->
+      <!-- Quick Jump -->
       @if (totalPages > 10) {
       <div class="flex items-center justify-center mt-4 space-x-2">
         <span class="text-sm text-gray-600">Go to page:</span>
-        <input
-          #pageInput
-          type="number"
-          min="1"
-          [max]="totalPages"
+        <input #pageInput type="number" min="1" [max]="totalPages"
           class="w-16 px-2 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Page"
-          (keyup.enter)="goToPageFromInput($event)">
-        <button
-          (click)="goToPage(parseInt(pageInput.value))"
+          placeholder="Page" (keyup.enter)="goToPageFromInput($event)">
+        <button (click)="goToPage(parseInt(pageInput.value))"
           class="px-3 py-1 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
           Go
         </button>

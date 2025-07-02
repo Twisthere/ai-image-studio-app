@@ -1,26 +1,26 @@
-import { Component, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Image } from '../../services/image';
 
 @Component({
   selector: 'app-image-generator',
-  imports: [FormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './image-generator.html',
   styleUrl: './image-generator.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImageGenerator {
-  prompt = signal<string>('');
+  promptControl = new FormControl('');
   generatedImage = signal<string | null>(null);
   loading = signal<boolean>(false);
 
   imageService = inject(Image);
 
-  constructor() {}
   generate() {
-    if (!this.prompt().trim()) return;
+    if (!this.promptControl.value?.trim()) return;
 
     this.loading.set(true);
-    this.imageService.generateImage(this.prompt()).subscribe({
+    this.imageService.generateImage(this.promptControl.value!).subscribe({
       next: (imageUrl: string) => {
         this.generatedImage.set(imageUrl);
         this.loading.set(false);
